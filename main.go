@@ -1,9 +1,11 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
+	"log"
 
-	_ "modernc.org/sqlite"
+	_ "github.com/modernc/sqlite"
 )
 
 type Sale struct {
@@ -20,9 +22,28 @@ func (s Sale) String() string {
 
 func selectSales(client int) ([]Sale, error) {
 	var sales []Sale
-
-	// напишите код здесь
-
+	db, err := sql.Open("sqlite", "demo.db")
+	if err != nil {
+		log.Println(err)
+		return sales, err
+	}
+	defer db.Close()
+	rows, err := db.Query("SELECT product, volume, date FROM sales WHERE client = ?", client)
+	if err != nil {
+		log.Println(err)
+		return sales, err
+	}
+	defer rows.Close()
+	// Выполняем итерацию по результату запроса
+	for rows.Next() {
+		var sale Sale
+		err := rows.Scan(&sale.Product, &sale.Volume, &sale.Date)
+		if err != nil {
+			log.Println(err)
+			return sales, err
+		}
+		sales = append(sales, sale)
+	}
 	return sales, nil
 }
 
